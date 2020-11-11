@@ -2,31 +2,6 @@
 
 > 雪球APP Python API (需要自取token)
 
-## 快速指引
-
-安装
-
-```bash
-pip install pysnowball
-```
-
-示例
-
-```python
->>> import pysnowball as ball
->>> ball.set_token('xq_a_token=651af***************031c96a315c;')
-'xq_a_token=651af***************031c96a315c;'
->>> ball.cash_flow('SH600000')
-```
-
-调用API前需要手动获取雪球网站的token,使用set_token设置token后才能访问雪球的API。
-
-传送门 === [如何获取雪球token](https://blog.crackcreed.com/diy-xue-qiu-app-shu-ju-api/)
-
-## 联系作者
-
-![img](https://blog.crackcreed.com/content/images/2017/11/qrcode_for_gh_ab3754053ff8_344.jpg)
-
 ## APIs
 
 ### 实时行情
@@ -34,7 +9,7 @@ pip install pysnowball
 获取某支股票的行情数据
 
 ```python
-import pysnowball as ball
+import xueqiu
 ball.quotec('SZ002027')
 ```
 
@@ -1302,8 +1277,10 @@ ball.industry_compare('SZ002027')
 }
 ```
 
+```
+import xueqiu
+xueqiu.fetch('SH603658', 'quote_detail')
 
-quote_detail
 {
   "data": {
     "market": {
@@ -1400,3 +1377,4 @@ quote_detail
   "error_code": 0,
   "error_description": ""
 }
+```

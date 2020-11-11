@@ -6,22 +6,11 @@ import time
 import requests
 import datetime
 
-def print_json(js, info ='', support_cn = True):
-    if len(info) > 0:
-        info += ': '
-    if js is None:
-        print info,"is None"
-    else:
-        if support_cn:
-            print info + json.dumps(js, encoding='UTF-8', ensure_ascii=False, sort_keys=True)
-        else:
-            print info,js
-
 def fetch(url, headers={}):
-    print 'url:',url
+    print('url:'+url)
     resp=requests.get(url, headers=headers)
     if resp.status_code != 200:
-        print resp.status_code
+        print(resp.status_code)
         raise Exception(resp.content)
     return json.loads(resp.content)
 
@@ -56,8 +45,8 @@ def chinabond(year=10, workTime=None):
             jsdata = fetch(url+workTime)
             try:
                 return parse_chinabond_data(jsdata, year)
-            except Exception,e:
-                print 'no data date:',workTime
+            except Exception as e:
+                print('no data date:' + workTime)
                 #print e
                 continue
     else: 

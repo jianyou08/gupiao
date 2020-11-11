@@ -80,7 +80,7 @@ def fetch(symbols, cmd, params={}):
         'Connection': 'keep-alive'}
     if need_token is True:
         headers['Cookie'] = get_token()
-    print url
+    print(url)
     return util.http_get(url, headers)
 
 def test(symbol):
@@ -89,6 +89,6 @@ def test(symbol):
     #return
     for cmd in sorted(cmd_map.keys()):
         js = fetch(symbol, cmd)
-        print '==>',cmd,':',len(js)
+        print('==>' + cmd + ':' + len(js))
 
 #test('SZ000001')

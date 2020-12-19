@@ -11,6 +11,7 @@ import web
 import wx_receive
 import wx_reply
 from wx_handle import *
+from api_handle import *
 
 
 sys.path.append("../good_price")
@@ -22,6 +23,7 @@ debug_mode = False
 urls = (
     '/wx', 'WXHandle',
     '/goodprice', 'H5Handle',
+    '/api', 'ApiHandle',
 )
 
 class H5Handle:

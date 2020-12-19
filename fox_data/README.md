@@ -4,17 +4,70 @@
 
 ## APIs
 
-### 实时行情
-
-获取某支股票的行情数据
-
-```python
+### 使用方法
+```
 import xueqiu
-ball.quotec('SZ002027')
+xueqiu.set_token('xq_a_token=xxxx')   #需要通过浏览器自己获取
+xueqiu.fetch(symbol, cmd, param)
+
+eg. 实时行情
+import xueqiu
+xueqiu.set_token('xq_a_token=xxxx')
+xueqiu.fetch(symbol, 'realtime_quote', param)
+
 ```
 
-结果显示：
 
+```
+cmd:(url, default_param, need_token)
+
+# finance, 参数type可以不填
+'finance_cash_flow':('https://stock.xueqiu.com/v5/stock/finance/cn/cash_flow.json?symbol=',  {'type':'Q4', 'count':10}, True),
+'finance_indicator':('https://stock.xueqiu.com/v5/stock/finance/cn/indicator.json?symbol=',  {'type':'Q4', 'count':10}, True),
+'finance_balance':('https://stock.xueqiu.com/v5/stock/finance/cn/balance.json?symbol=',      {'type':'Q4', 'count':10}, True),
+'finance_income':('https://stock.xueqiu.com/v5/stock/finance/cn/income.json?symbol=',        {'type':'Q4', 'count':10}, True),
+'finance_business':('https://stock.xueqiu.com/v5/stock/finance/cn/business.json?symbol=',    {'type':'Q4', 'count':10}, True),
+
+# report
+'report_latest':('https://stock.xueqiu.com/stock/report/latest.json?symbol=',                   {}, True),
+'report_earningforecast':('https://stock.xueqiu.com/stock/report/earningforecast.json?symbol=', {}, True),
+
+# capital
+'capital_margin':('https://stock.xueqiu.com/v5/stock/capital/margin.json?symbol=',         {'page':1, 'size':180}, True),
+'capital_blocktrans':('https://stock.xueqiu.com/v5/stock/capital/blocktrans.json?symbol=', {'page':1, 'size':30}, True),
+'capital_assort':('https://stock.xueqiu.com/v5/stock/capital/assort.json?symbol=',         {}, True),
+'capital_history':('https://stock.xueqiu.com/v5/stock/capital/history.json?symbol=',       {'count':20}, True),
+'capital_flow':('https://stock.xueqiu.com/v5/stock/capital/flow.json?symbol=',             {}, True),
+
+# f10
+'f10_skholderchg':('https://stock.xueqiu.com/v5/stock/f10/cn/skholderchg.json?symbol=',{}, True),
+'f10_skholder':('https://stock.xueqiu.com/v5/stock/f10/cn/skholder.json?symbol=',      {}, True),
+'f10_industry':('https://stock.xueqiu.com/v5/stock/f10/cn/industry.json?symbol=',      {}, True),
+'f10_holders':('https://stock.xueqiu.com/v5/stock/f10/cn/holders.json?&symbol=',       {}, True),
+'f10_bonus':('https://stock.xueqiu.com/v5/stock/f10/cn/bonus.json?&symbol=',           {'page':1,'size':10}, True),
+'f10_org_holding_change':('https://stock.xueqiu.com/v5/stock/f10/cn/org_holding/change.json?symbol=', {}, True),
+'f10_industry_compare':('https://stock.xueqiu.com/v5/stock/f10/cn/industry/compare.json?type=single&symbol=', {}, True),
+'f10_business_analysis':('https://stock.xueqiu.com/v5/stock/f10/cn/business_analysis.json?symbol=',  {}, True),
+'f10_shareschg':('https://stock.xueqiu.com/v5/stock/f10/cn/business_analysis.json?symbol=',    {'count':5}, True),
+'f10_top_holders':('https://stock.xueqiu.com/v5/stock/f10/cn/top_holders.json?&symbol=',       {'circula':1}, True),
+'f10_indicator':('https://stock.xueqiu.com/v5/stock/f10/cn/indicator.json?symbol=',            {}, True),
+
+# real time
+'realtime_quote':('https://stock.xueqiu.com/v5/stock/realtime/quotec.json?symbol=',  {}, False),
+'realtime_pankou':('https://stock.xueqiu.com/stock/pankou.json?symbol=',             {}, True),
+
+#detail info
+'quote_detail':('https://stock.xueqiu.com/v5/stock/quote.json?extend=detail&symbol=',     {}, True),
+```
+
+### 实时行情
+获取某支股票的行情数据
+```
+import xueqiu
+xueqiu.set_token('xq_a_token=xxxx')
+xueqiu.fetch(symbol, 'realtime_quote')
+```
+结果显示：
 ```json
 {
     "data": [
@@ -52,14 +105,12 @@ ball.quotec('SZ002027')
 ### 实时分笔
 
 获取实时分笔数据，可以实时取得股票当前报价和成交信息
-
-```python
-import pysnowball as ball
-ball.pankou('SZ002027')
 ```
-
+import xueqiu
+xueqiu.set_token('xq_a_token=xxxx')
+xueqiu.fetch(symbol, 'realtime_pankou')
+```
 结果显示：
-
 ```json
 {
     "symbol": "SZ002027",
@@ -116,12 +167,11 @@ ball.pankou('SZ002027')
 ### 业绩预告
 
 按年度获取业绩预告数据
-
-```python
-import pysnowball as ball
-ball.earningforecast('SZ002027')
 ```
-
+import xueqiu
+xueqiu.set_token('xq_a_token=xxxx')
+xueqiu.fetch(symbol, 'report_earningforecast')
+```
 结果显示：
 
 ```json
@@ -155,12 +205,11 @@ ball.earningforecast('SZ002027')
 ### 机构评级
 
 获取机构评级数据
-
-```python
-import pysnowball as ball
-ball.report('SZ002027')
 ```
-
+import xueqiu
+xueqiu.set_token('xq_a_token=xxxx')
+xueqiu.fetch(symbol, 'report_latest')
+```
 结果显示：
 
 ```json
@@ -199,10 +248,10 @@ ball.report('SZ002027')
 ### 资金流向趋势
 
 获取当日资金流如流出数据，每分钟数据
-
-```python
-import pysnowball as ball
-ball.capital_flow('SZ002027')
+```
+import xueqiu
+xueqiu.set_token('xq_a_token=xxxx')
+xueqiu.fetch(symbol, 'capital_flow')
 ```
 
 结果显示：
@@ -235,10 +284,10 @@ ball.capital_flow('SZ002027')
 ### 资金流向历史
 
 获取历史资金流如流出数据，每日数据
-
-```python
-import pysnowball as ball
-ball.capital_history('SZ002027')
+```
+import xueqiu
+xueqiu.set_token('xq_a_token=xxxx')
+xueqiu.fetch(symbol, 'capital_history')
 ```
 
 结果显示：
@@ -274,10 +323,10 @@ ball.capital_history('SZ002027')
 ### 资金成交分布
 
 获取资金成交分布数据
-
-```python
-import pysnowball as ball
-ball.capital_assort('SZ002027')
+```
+import xueqiu
+xueqiu.set_token('xq_a_token=xxxx')
+xueqiu.fetch('SZ002027', 'capital_assort')
 ```
 
 结果显示：
@@ -305,10 +354,10 @@ ball.capital_assort('SZ002027')
 ### 大宗交易
 
 大宗交易数据
-
-```python
-import pysnowball as ball
-ball.blocktrans('SZ002027')
+```
+import xueqiu
+xueqiu.set_token('xq_a_token=xxxx')
+xueqiu.fetch('SZ002027', 'capital_blocktrans')
 ```
 
 结果显示：
@@ -347,11 +396,11 @@ ball.blocktrans('SZ002027')
 
 融资融券数据
 
-```python
-import pysnowball as ball
-ball.margin('SZ002027')
 ```
-
+import xueqiu
+xueqiu.set_token('xq_a_token=xxxx')
+xueqiu.fetch('SZ002027', 'capital_margin', {'page':1, 'size':180})
+```
 结果显示：
 
 ```json
@@ -381,18 +430,15 @@ ball.margin('SZ002027')
 ### 业绩指标
 
 按年度、季度获取业绩报表数据。
-
-```python
-import pysnowball as ball
-ball.indicator('SZ002027')
-# or
-ball.indicator(symbol='SZ002027',is_annals=1,count=10)
 ```
-
+import xueqiu
+xueqiu.set_token('xq_a_token=xxxx')
+xueqiu.fetch('SZ002027', 'finance_indicator', {'type':'Q4', 'count':10})
+```
 输入参数：
 
 * symbol -> 股票代码
-* is_annals -> 只获取年报,默认为1
+* type -> Q4表示年报， 不填表示全部
 * count -> 返回数据数量,默认5条
 
 结果显示：

@@ -23,9 +23,9 @@ CN_szpe = u'深证A股平均市盈率'
 #CN_base = u'基本信息'
 CN_symbol = u'0代码'
 CN_name = u'0名称'
-CN_pe_ttm = u'ttm市盈率'
-CN_dividend = u'ttm股息'
-CN_dividend_yield = u'ttm股息率'
+CN_pe_ttm = u'市盈率(ttm)'
+CN_dividend = u'股息(ttm)'
+CN_dividend_yield = u'股息率(ttm)'
 CN_current = u'最新价'
 CN_high52w = u'最高价(52周)'
 CN_low52w = u'最低价(52周)'
@@ -80,7 +80,8 @@ class DataGether(object):
 
     @staticmethod
     def quote_ttm(symbol):
-        xueqiu.set_token('xq_a_token=db48cfe87b71562f38e03269b22f459d974aa8ae')
+        alog.info('111')
+        #xueqiu.set_token('xq_a_token=a2a6ce3addb6502c2e7618a455fc6ae2e48d9544')
         resp = xueqiu.fetch(symbol, 'quote_detail', params={})
         #jsresp = json.loads(resp, encoding='utf-8')
         #util.print_json(resp, 'xueqiu.fetch quote_detail:'+symbol)
@@ -93,6 +94,7 @@ class DataGether(object):
         data[CN_dividend_yield] = str(quote['dividend_yield'])
         data[CN_high52w] = str(quote['high52w'])
         data[CN_low52w] = str(quote['low52w'])
+        #util.print_json(data, '11')
         return data
 
 class GoodPriceCalc(object):
@@ -100,7 +102,7 @@ class GoodPriceCalc(object):
         self.chinabond10 = 0.0
         self.market_pe   = 0.0
 
-    def calc_good_price(self, symbol, ttm_data):
+    def calc_good_price(self, symbol, ttm_data, youji_level=1):
         data = {}
         current = float(ttm_data[CN_current])
         pe_ttm  = float(ttm_data[CN_pe_ttm])
@@ -210,13 +212,16 @@ class GoodPriceCalc(object):
 
     '''input:
         codes:      eg: '000001,600300,300200'
+        use_cache:  cache一天，同样codes的查询每天计算一次
+        youji_level:  优绩级别 1(正常),2(优绩)
     '''
-    def calc(self, codes, use_cache=True):
+    def calc(self, codes, use_cache=True, youji_level = 1):
+        alog.debug(codes, 'good_price::calc')
         code_list = codes.split(',')
         if len(codes) < 5 or len(code_list) < 1:
             return {'code':{'error':'codes is error:'+codes}}
         dts = datetime.datetime.now().strftime('%Y%m%d')
-        cachefile = '.cache/' + codes + '-' + dts + '.json'
+        cachefile = "data/goodprice/goodprice-%s-%s-%d.json" % (codes, dts, youji_level)
         if use_cache is True:
             try:
                 redata = util.load_json(cachefile)
@@ -228,35 +233,31 @@ class GoodPriceCalc(object):
         market_data = {CN_chinabond10:"%.3f%%" % (self.chinabond10*100), CN_szpe:str(self.market_pe)}
         alog.info('market_pe:' + str(self.market_pe) + ' chinabond10:' + str(self.chinabond10), 'good_price', 'calc')
         redata = {}
+        allok = True
         for code in code_list:
             symbol = util.code2symbal(code)
             alog.info(symbol + '...', 'good_price', 'calc')
-            if True:
-                try:
-                #if True:
-                    ttm_data = DataGether.quote_ttm(symbol)
-                    #util.print_json(ttm_data)
-                    itemdata = {}
-                    itemdata['a'] = ttm_data
-                    itemdata['b'] = market_data
-                    itemdata['c'] = self.calc_good_price(symbol, ttm_data)
-                    redata[symbol] = itemdata
-                #else:
-                except Exception as e1:
-                    print("[req_quote] error:" + str(e1))
-                    itemdata = {}
-                    itemdata['a'] = {CN_symbol:symbol}
-                    itemdata['b'] = market_data
-                    itemdata['c'] = {}
-                    redata[symbol] = itemdata
-                    continue
-            else:
+            try:
+            #if True:
                 ttm_data = DataGether.quote_ttm(symbol)
                 #util.print_json(ttm_data)
-                itemdata = self.calc_good_price(symbol, ttm_data)
+                itemdata = {}
+                itemdata['a'] = ttm_data
+                itemdata['b'] = market_data
+                itemdata['c'] = self.calc_good_price(symbol, ttm_data, youji_level)
+                redata[symbol] = itemdata
+            #else:
+            except Exception as e1:
+                print("[req_quote] error:" + str(e1))
+                allok = False
+                itemdata = {}
+                itemdata['a'] = {CN_symbol:symbol}
+                itemdata['b'] = market_data
+                itemdata['c'] = {}
                 redata[symbol] = itemdata
             time.sleep(2)
-        util.dump_json(cachefile, redata)
+        if allok is True:
+            util.dump_json(cachefile, redata)
         return redata
 
     def save_to_cvs(self, price_data, file='good_price.csv'):
@@ -296,6 +297,7 @@ class GoodPriceCalc(object):
             for (a, groupdata) in sorted(itemdata.items(), key=lambda x: x[0]):
                 for (k,v) in sorted(groupdata.items(), key=lambda x: x[0]):
                     res += k + ':' + v + split
+                res += split
         return res
 
 def calc_code(code_list = ['600585']):

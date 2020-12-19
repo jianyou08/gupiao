@@ -50,9 +50,9 @@ def code2symbal(code, market=''):
     if code.isdecimal():
         #sh sz
         if len(code) == 6: 
-            if code[:1] == '0' or code[:1] == '1':
+            if code[:1] == '0' or code[:1] == '1' or code[:3] == '300':
                 symbal = 'sz' + code
-            elif code[:1] == '3' or code[:1] == '5' or code[:1] == '6'or code[:1] == '7':
+            elif code[:1] == '5' or code[:1] == '6'or code[:1] == '7':
                 symbal = 'sh' + code
         #hk
         elif len(code) == 5:pass

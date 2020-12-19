@@ -49,7 +49,8 @@ cmd_map = {
 
 def get_token():
     if os.environ.get('XUEQIUTOKEN') is None:
-        raise Exception(NOTOKEN_ERROR_MSG)
+        return 'xq_a_token=a2a6ce3addb6502c2e7618a455fc6ae2e48d9544'
+        #raise Exception(NOTOKEN_ERROR_MSG)
     else:
         return os.environ['XUEQIUTOKEN']
 

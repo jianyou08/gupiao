@@ -30,7 +30,15 @@ class Msg(object):
 class TextMsg(Msg):
     def __init__(self, xmlData):
         Msg.__init__(self, xmlData)
-        self.Content = xmlData.find('Content').text.encode("utf-8")
+        self.ContentRaw = xmlData.find('Content').text.encode("utf-8")
+        self.Content = bytes.decode(self.ContentRaw)
+        self.handle_type = 'goodprice'
+        if self.Content.startswith('xueqiu:') :
+            self.handle_type = 'xueqiu_token'
+            self.Content = self.Content[7:]
+        if self.Content.startswith('note:'): 
+            self.handle_type = 'note'
+            self.Content = self.Content[5:]
 
 
 class ImageMsg(Msg):
@@ -38,3 +46,4 @@ class ImageMsg(Msg):
         Msg.__init__(self, xmlData)
         self.PicUrl = xmlData.find('PicUrl').text
         self.MediaId = xmlData.find('MediaId').text
+

@@ -101,6 +101,7 @@ class GoodPriceCalc(object):
     def __init__(self):
         self.chinabond10 = 0.0
         self.market_pe   = 0.0
+        self.cachefile = ''
 
     def calc_good_price(self, symbol, ttm_data, youji_level=1):
         data = {}
@@ -180,13 +181,17 @@ class GoodPriceCalc(object):
         lv_avg = sum([l for (l,t) in level_list if l is not None]) / len(level_list)
         lv_max = max([l for (l,t) in level_list if l is not None])
         if (lv_avg <= 2 and lv_max <=2) or (dividend_yield > self.chinabond10 and self.market_pe < 20 and pe_ttm < 16):
-            info = u'%d:买，低风险，可以考虑购买 ' % (lv_avg)
+            info = u'%d:低风险,建议购买 ' % (lv_avg)
         elif (lv_avg < 4):
-            info = u'%d:观望，中风险，可以继续观望 ' % (lv_avg)
+            info = u'%d:中风险,继续观望 ' % (lv_avg)
         else:
-            info = u'%d:观望，高风险,等待好价格 ' % (lv_avg)
+            info = u'%d:高风险,等待好价格 ' % (lv_avg)
+        ml,mt = 0,''
         for (l,t) in level_list:
-            info += t + "(%d);"  % l
+            if ml > l: 
+                ml = l
+                mt = t
+        info += mt + "(%d);"  % ml
         #info += '-'.join([[t for (l,t) in level_list]])
 
         data[CN_buy_info] = info
@@ -210,22 +215,43 @@ class GoodPriceCalc(object):
         #util.print_json(data)
         return data
 
+    #记录用户查询历史信息
+    def record_history(self, user, retdata, symbal):
+        alog.debug(user + ' ' + symbal, 'good_price::record_history')
+        util.print_json(retdata)
+        if len(user) <= 0:
+            alog.info("user is empty", 'good_price::record_history')
+            return
+        dts = datetime.datetime.now().strftime('%Y-%m-%d')
+        if symbal in retdata.keys():
+            try:
+                itemdata = retdata[symbal]['basic']
+                ctx = '\t'.join([user, dts, symbal, itemdata[CN_name], itemdata[CN_current], itemdata[CN_pe_ttm]])
+                util.dump_str("data/user/goodprice_history_%s.txt" % (user), ctx+'\n', mode='a')
+            except:
+                alog.info("histroy data error", 'good_price::record_history')
+        else:
+            alog.info(symbal + "not in retdata", 'good_price::record_history')
+        return
+
     '''input:
         codes:      eg: '000001,600300,300200'
         use_cache:  cache一天，同样codes的查询每天计算一次
         youji_level:  优绩级别 1(正常),2(优绩)
     '''
-    def calc(self, codes, use_cache=True, youji_level = 1):
+    def calc(self, codes, use_cache=True, youji_level = 1, user=''):
         alog.debug(codes, 'good_price::calc')
         code_list = codes.split(',')
         if len(codes) < 5 or len(code_list) < 1:
             return {'code':{'error':'codes is error:'+codes}}
-        dts = datetime.datetime.now().strftime('%Y%m%d')
-        cachefile = "data/goodprice/goodprice-%s-%s-%d.json" % (codes, dts, youji_level)
-        if use_cache is True:
+        if (use_cache is True) and len(code_list) == 1:
+            #查询单只股票的时候才直接请求cache
+            symbol = util.code2symbal(codes)
+            self.cachefile = util.cache_filename('goodprice', symbol) 
             try:
-                redata = util.load_json(cachefile)
-                alog.info('hit cache:'+codes + ' cache file:'+cachefile, 'good_price', 'calc')
+                redata = util.load_json(self.cachefile)
+                self.record_history(user, redata, symbol)
+                alog.info('hit cache 1:'+symbol + ' cache file:'+self.cachefile, 'good_price', 'calc')
                 return redata
             except: pass
         self.chinabond10 = DataGether.chinabond10()
@@ -233,31 +259,39 @@ class GoodPriceCalc(object):
         market_data = {CN_chinabond10:"%.3f%%" % (self.chinabond10*100), CN_szpe:str(self.market_pe)}
         alog.info('market_pe:' + str(self.market_pe) + ' chinabond10:' + str(self.chinabond10), 'good_price', 'calc')
         redata = {}
-        allok = True
         for code in code_list:
             symbol = util.code2symbal(code)
+            self.cachefile = util.cache_filename('goodprice', symbol)
+            if use_cache is True:
+                try:
+                    cachedata = util.load_json(self.cachefile)
+                    self.record_history(user, cachedata, symbol)
+                    redata = dict(redata, **cachedata)
+                    alog.info('hit cache 2:'+symbol + ' cache file:'+self.cachefile, 'good_price', 'calc')
+                    continue
+                except: pass
             alog.info(symbol + '...', 'good_price', 'calc')
             try:
             #if True:
                 ttm_data = DataGether.quote_ttm(symbol)
                 #util.print_json(ttm_data)
                 itemdata = {}
-                itemdata['a'] = ttm_data
-                itemdata['b'] = market_data
-                itemdata['c'] = self.calc_good_price(symbol, ttm_data, youji_level)
+                itemdata['basic'] = ttm_data
+                itemdata['market'] = market_data
+                itemdata['goodprice'] = self.calc_good_price(symbol, ttm_data, youji_level)
                 redata[symbol] = itemdata
+                util.dump_json(self.cachefile, redata)
+                self.record_history(user, redata, symbol)
             #else:
             except Exception as e1:
                 print("[req_quote] error:" + str(e1))
-                allok = False
                 itemdata = {}
-                itemdata['a'] = {CN_symbol:symbol}
-                itemdata['b'] = market_data
-                itemdata['c'] = {}
+                itemdata['basic'] = {CN_symbol:symbol}
+                itemdata['market'] = market_data
+                itemdata['goodprice'] = {}
                 redata[symbol] = itemdata
+                #self.record_history(user, redata, symbol)
             time.sleep(2)
-        if allok is True:
-            util.dump_json(cachefile, redata)
         return redata
 
     def save_to_cvs(self, price_data, file='good_price.csv'):
@@ -300,7 +334,57 @@ class GoodPriceCalc(object):
                 res += split
         return res
 
-def calc_code(code_list = ['600585']):
+def test(codes='000066'):
+    calc = GoodPriceCalc()
+    price_data = calc.calc(codes, use_cache=False)
+    #res = calc.to_json(price_data, 4)
+    #return res
+    res = {
+        "basic": [
+            [CN_symbol],
+            [CN_name],
+            [CN_pe_ttm],
+            [CN_current],
+            [CN_low52w],
+            [CN_high52w],
+            [CN_dividend],
+            [CN_dividend_yield]
+        ],
+        "market":[
+            [CN_chinabond10],
+            [CN_szpe],
+        ],
+        "goodprice": [
+            [CN_normalbuy_pe25],
+            [CN_goodbuy_cb10],
+            [CN_goodbuy_pe15],
+            [CN_sell_pe],
+            [CN_sell_dividend],
+            [CN_buy_info],
+            [CN_sell_info]
+        ]
+    }
+    def add(res, idx, itemdata, group):
+        resitem = res[group][idx]
+        key = res[group][idx][0]
+        #print(group,key,resitem)
+        if group not in itemdata:
+            resitem.append('')
+            return
+        if key in itemdata[group]:
+            resitem.append(itemdata[group][key])
+        else:
+            resitem.append('')
+    for (symbol,itemdata) in price_data.items():
+        for idx in range(len(res['basic'])):
+            add(res, idx, itemdata, 'basic')
+        for idx in range(len(res['market'])):
+            add(res, idx, itemdata, 'market')
+        for idx in range(len(res['goodprice'])):
+            add(res, idx, itemdata, 'goodprice')
+    print(util.print_json(res))
+    
+def calc_code(code_list = '600585'):
     calc = GoodPriceCalc()
     price_data = calc.calc(code_list)
     #calc.save_to_cvs(price_data)
@@ -315,9 +399,10 @@ def calc_file(filename='list.txt'):
             if len(arr) >= 2:
                 code_list.append(arr[0])
         fi.close()
-    calc_code(code_list)
+    calc_code(','.join(code_list))
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
-        calc_code(sys.argv[1].split(','))
+        #calc_code(sys.argv[1].split(','))
+        test(sys.argv[1])
         print('finish...')

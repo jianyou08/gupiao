@@ -1,6 +1,6 @@
 #!/bin/bash
 
-app="python3 web_web.py 80"
+app="python3 web_web.py 8080"
 logfile=".logs/web.log"
 
 run_mode="$2"

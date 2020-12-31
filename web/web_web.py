@@ -23,7 +23,8 @@ debug_mode = False
 urls = (
     '/wx', 'WXHandle',
     '/goodprice', 'H5Handle',
-    '/api', 'ApiHandle',
+    '/api/goodprice', 'ApiHandleGoodPrice',
+    '/api/history', 'ApiHandleHistory',
 )
 
 class H5Handle:

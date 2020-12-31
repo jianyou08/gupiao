@@ -27,14 +27,19 @@ def http_post(url, headers={}, params={}, json_rs = True):
         return json.loads(resp.content)
     return resp.content
 
+def cache_filename(prefix, key, dts=None):
+    if dts is None:
+        dts = datetime.datetime.now().strftime('%Y%m%d')
+    cachefile = "data/%s/%s-%s-%s-1.json" % (prefix, prefix, key, dts)
+    return cachefile
 
-def dump_str(filename, s):
-    with codecs.open(filename, 'w', encoding='utf-8') as f:
+def dump_str(filename, s, mode='w'):
+    with codecs.open(filename, mode, encoding='utf-8') as f:
         f.write(s)
         f.close()
 
-def dump_json(filename, js):
-    with codecs.open(filename, 'w', encoding='utf-8') as f:
+def dump_json(filename, js, mode='w'):
+    with codecs.open(filename, mode, encoding='utf-8') as f:
         json.dump(js, f, indent=4, ensure_ascii=False)
         f.close()
 
